@@ -1,0 +1,108 @@
+services:
+  # Ambiente do Laboratorio
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    hostname: rabbitmq
+    ports:
+      - '15672:15672'
+      - '5672:5672'
+    volumes:
+      - ./rabbitmq/config/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      #- ./rabbitmq/data:/var/lib/rabbitmq
+      #- ./rabbitmq/log:/var/log/rabbitmq
+    restart: unless-stopped
+    healthcheck:
+      test: "rabbitmq-diagnostics check_port_connectivity --formatter json | tail -1 | grep -q '\"result\":\"ok\"'"
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 10s
+  
+  redis:
+    image: redis/redis-stack
+    container_name: redis
+    hostname: redis
+    ports:
+      - 6379:6379 
+      - 8001:8001
+    volumes:
+      - ./redis/data/:/data
+    environment:
+      REDIS_ARGS: --save 60 1000 --appendonly yes
+      REDISTIMESERIES_ARGS: "RETENTION_POLICY=20"
+
+  minio:
+    image: quay.io/minio/minio
+    container_name: minio
+    hostname: minio
+    ports:
+      - 9000:9000
+      - 9001:9001
+    volumes:
+      - ./minio/data:/data
+    environment:
+      MINIO_ROOT_USER: /run/secrets/usuario
+      MINIO_ROOT_PASSWORD: /run/secrets/senha
+    command: server /data --console-address ":9001"
+    secrets:
+      - usuario
+      - senha
+
+  # Containers com os programas auxiliares
+  inicio_rabbitmq:
+    image: projeto_rabbitmq:projetoAda
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM python:3.12-bullseye
+        RUN pip install pika
+    container_name: inicio_rabbitmq
+    volumes:
+      - ./scripts/rabbitmq_connection.py:/scripts/rabbitmq_connection.py
+      - ./scripts/criar_ambiente_rabbitmq.py:/scripts/app.py
+    environment:
+      PYTHONUNBUFFERED: 1
+    entrypoint: python /scripts/app.py
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    secrets:
+      - usuario
+      - senha
+
+  producer-transacoes:
+    image: projeto_rabbitmq:projetoAda
+    container_name: producer-transacoes
+    volumes:
+      - ./scripts/rabbitmq_connection.py:/scripts/rabbitmq_connection.py
+      - ./scripts/producer_transacoes.py:/scripts/app.py
+    environment:
+      PYTHONUNBUFFERED: 1
+    entrypoint: python /scripts/app.py
+    depends_on:
+      - inicio_rabbitmq
+    secrets:
+      - usuario
+      - senha
+  
+  consumer-transacoes:
+    image: projeto_rabbitmq:projetoAda
+    container_name: consumer-transacoes
+    volumes:
+      - ./scripts/rabbitmq_connection.py:/scripts/rabbitmq_connection.py
+      - ./scripts/consumer-transacoes.py:/scripts/app.py
+    environment:
+      PYTHONUNBUFFERED: 1
+    entrypoint: python /scripts/app.py
+    depends_on:
+      - inicio_rabbitmq
+    secrets:
+      - usuario
+      - senha
+
+secrets:
+  usuario:
+    file: ./secrets/usuario_padrao.txt
+  senha:
+    file: ./secrets/senha_padrao.txt

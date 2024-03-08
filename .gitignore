@@ -1,0 +1,3 @@
+minio/data/
+redis/data/
+rabbitmq/data/
