@@ -1,3 +1,4 @@
 minio/data/
 redis/data/
 rabbitmq/data/
+scripts/__pycache__/

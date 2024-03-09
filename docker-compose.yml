@@ -26,11 +26,17 @@ services:
     ports:
       - 6379:6379 
       - 8001:8001
-    volumes:
-      - ./redis/data/:/data
+    # volumes:
+    #   - ./redis/data/:/data
     environment:
       REDIS_ARGS: --save 60 1000 --appendonly yes
       REDISTIMESERIES_ARGS: "RETENTION_POLICY=20"
+    healthcheck:
+      test: "redis-cli ping | grep -q PONG"
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 10s
 
   minio:
     image: quay.io/minio/minio
@@ -39,8 +45,8 @@ services:
     ports:
       - 9000:9000
       - 9001:9001
-    volumes:
-      - ./minio/data:/data
+    # volumes:
+    #   - ./minio/data:/data
     environment:
       MINIO_ROOT_USER: /run/secrets/usuario
       MINIO_ROOT_PASSWORD: /run/secrets/senha
@@ -50,56 +56,67 @@ services:
       - senha
 
   # Containers com os programas auxiliares
-  inicio_rabbitmq:
+  base_redis:
+    image: projeto_redis:projetoAda
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM python:3.12-bullseye
+        RUN pip install redis
+    entrypoint: python /scripts/app.py
+
+  criar_contas:
+    extends: base_redis
+    container_name: criar_contas
+    volumes:
+      - ./scripts/criar_contas.py:/scripts/app.py
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  base_rabbitmq:
     image: projeto_rabbitmq:projetoAda
     build:
       context: .
       dockerfile_inline: |
         FROM python:3.12-bullseye
-        RUN pip install pika
-    container_name: inicio_rabbitmq
+        RUN pip install pika redis
+    container_name: base_rabbitmq
     volumes:
       - ./scripts/rabbitmq_connection.py:/scripts/rabbitmq_connection.py
-      - ./scripts/criar_ambiente_rabbitmq.py:/scripts/app.py
     environment:
       PYTHONUNBUFFERED: 1
     entrypoint: python /scripts/app.py
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
     secrets:
       - usuario
       - senha
 
+  inicio_rabbitmq:
+    extends: base_rabbitmq
+    container_name: inicio_rabbitmq
+    volumes:
+      - ./scripts/criar_ambiente_rabbitmq.py:/scripts/app.py
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      criar_contas:
+        condition: service_completed_successfully
+
   producer-transacoes:
-    image: projeto_rabbitmq:projetoAda
+    extends: base_rabbitmq
     container_name: producer-transacoes
     volumes:
-      - ./scripts/rabbitmq_connection.py:/scripts/rabbitmq_connection.py
       - ./scripts/producer_transacoes.py:/scripts/app.py
-    environment:
-      PYTHONUNBUFFERED: 1
-    entrypoint: python /scripts/app.py
     depends_on:
       - inicio_rabbitmq
-    secrets:
-      - usuario
-      - senha
-  
+
   consumer-transacoes:
-    image: projeto_rabbitmq:projetoAda
+    extends: base_rabbitmq
     container_name: consumer-transacoes
     volumes:
-      - ./scripts/rabbitmq_connection.py:/scripts/rabbitmq_connection.py
       - ./scripts/consumer-transacoes.py:/scripts/app.py
-    environment:
-      PYTHONUNBUFFERED: 1
-    entrypoint: python /scripts/app.py
     depends_on:
       - inicio_rabbitmq
-    secrets:
-      - usuario
-      - senha
 
 secrets:
   usuario:
