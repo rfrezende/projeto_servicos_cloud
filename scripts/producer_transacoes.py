@@ -2,10 +2,12 @@
 ###############################################################################
 #
 # Script para enviar solicitações de transações para o RabbitMQ
-# Parte do projeto do módulo Soluções Nuvem do treinamento Jornada Digital 
+#
+# Parte do projeto do módulo Serviços Cloud do treinamento Jornada Digital 
 # ADA-Caixa
 #
-import json
+# Autor: Roberto Flavio Rezende
+#
 import redis
 import random
 from rabbitmq_connection import new_connection

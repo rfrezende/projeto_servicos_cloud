@@ -1,3 +1,13 @@
+# coding=utf-8
+###############################################################################
+#
+# Script para criar as contas no Redis
+#
+# Parte do projeto do módulo Serviços Cloud do treinamento Jornada Digital 
+# ADA-Caixa
+#
+# Autor: Roberto Flavio Rezende
+#
 import redis
 import random
 
