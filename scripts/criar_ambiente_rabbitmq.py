@@ -11,8 +11,9 @@
 from rabbitmq_connection import new_connection
 from datetime import datetime
 
+timestamp = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
+print(f'{timestamp} Criando ambiente...')
 
-print(f'{datetime.now()} Criando ambiente...')
 con = new_connection()
 channel = con.channel()
 
@@ -27,4 +28,6 @@ channel.queue_declare(queue='transacoes_notificacao', durable=True)
 channel.queue_bind(queue='transacoes_notificacao', exchange='transacoes', routing_key='notificar')
 
 con.close()
-print(f'{datetime.now()} Ambiente criado.')
+
+timestamp = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
+print(f'{timestamp} Ambiente criado.')

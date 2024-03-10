@@ -13,7 +13,11 @@
 import json
 import redis
 from rabbitmq_connection import new_connection
+from datetime import datetime
 
+
+timestamp = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
+print(f'{timestamp} Iniciando o consumo das filas...')
 
 connection = new_connection()
 channel = connection.channel()
