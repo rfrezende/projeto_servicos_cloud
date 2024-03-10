@@ -14,16 +14,32 @@ from rabbitmq_connection import new_connection
 from time import sleep
 from datetime import datetime
 
+
+timestamp = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
+print(f'{timestamp} Iniciando a produção de transações...')
+
 r = redis.Redis(host='redis', port=6379, decode_responses=True, )
 contas = r.lrange('contas', 0, -1)
 
-print(f'{datetime.now()} iniciando...')
 connection = new_connection()
 channel = connection.channel()
 
 while True:
-    sleep(1)
+    # Gera uma espera entre 1 e 10 segundos para dar uma sensacao de movimento real.
+    # Sem o sleep o script iria gerar milhares de transações por segundo e moer a CPU.
+    sleep(random.randint(1, 10))
+    
+    # Coloca todas as transacoes no Rio de Janeiro e 5% para Sao Paulo com o intuito de gerar "fraude"
+    cidade = 'Rio de Janeiro' if random.Random() < 0.05 else 'Sao Paulo'
+    
+    # Escolhe uma conta aleatoriamente para enviar a transação
     conta = contas[random.randint(0, len(contas) - 1)]
+    
+    # Escolhe um valor aleatório para a transação.
+    # Não serve para nada, mas porque não fazer?
+    valor = random.randrange(100, 5000)
+    
     timestamp = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
-    transacao = {'conta': conta, 'transacao': {'valor': 1, 'timestamp': timestamp}}
+    
+    transacao = {'conta': conta, 'transacao': {'valor': valor, 'cidade': cidade, 'timestamp': timestamp}}
     channel.basic_publish(exchange='transacoes', routing_key='solicitar', body=str(transacao))
