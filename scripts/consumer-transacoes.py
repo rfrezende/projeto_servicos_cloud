@@ -26,8 +26,9 @@ r = redis.Redis(host='redis', port=6379, decode_responses=True)
 
 def callback(ch, method, properties, body):
         # Grava a transação no Redis
-        transacao = json.loads(body.decode('utf-8').replace("'", '"'))
+        transacao = json.loads(body.decode('utf-8'))
         r.json().arrappend(transacao['conta'], '$.transacoes', transacao['transacao'])
+        print(transacao)
         
         # Coloca uma mensagem para avisar que a conta teve uma nova transação
         channel.basic_publish(exchange='transacoes', routing_key='notificar', body=transacao['conta'])
