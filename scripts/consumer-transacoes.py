@@ -44,8 +44,6 @@ def callback(ch, method, properties, body):
     else:
         transacao_anterior = transacao_atual
         
-    print(transacao_anterior)
-    
     # Grava a transação atual no Redis
     redis_client.json().arrappend(nu_conta, '$.transacoes', transacao_atual)
 
@@ -56,7 +54,7 @@ def callback(ch, method, properties, body):
     
     if transacao_anterior['cidade'] != transacao_atual['cidade'] and diferenca_de_horario < duas_horas:
         # Caso seja considerado fraude, monta e grava o relatório.        
-        print('----> evidencia de fraude: ', nu_conta, transacao_atual, diferenca_de_horario)
+        print(f'----> evidencia de fraude:\nConta: nu_conta\n Transação anterior: {transacao_anterior}\n Transação atual: {transacao_atual}')
         
         timestamp_relatorio = datetime.strftime(datetime.now(), '%Y%m%d%H%M%S')
         objeto_relatorio = f'relatorio_{nu_conta}_{timestamp_relatorio}.txt'
