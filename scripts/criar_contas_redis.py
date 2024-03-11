@@ -17,15 +17,15 @@ r = redis.Redis(host='redis', port=6379, decode_responses=True, )
 timestamp = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
 print(f'{timestamp} Criando contas no Redis...')
 
-quantidade_de_contas = 10
-criar_conta = lambda x: f'{random.randrange(10000, 99999)}-{random.randrange(1, 9)}'  # Função para gerar o número da conta
+quantidade_de_contas = 20
+# Função para gerar o número da conta
+criar_conta = lambda x: f'{random.randrange(10000, 99999)}-{random.randrange(1, 9)}'
+
 lista_contas = [criar_conta(None) for i in range(quantidade_de_contas)]
 r.rpush('contas', *lista_contas)
+print(lista_contas)
 
-contas = r.lrange('contas', 0, -1)  # Recupera a lista de contas geradas no Redis
-print(contas)
-
-for conta in contas:
+for conta in lista_contas:
     r.json().set(conta, '$', {'transacoes': []})
 
 timestamp = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
