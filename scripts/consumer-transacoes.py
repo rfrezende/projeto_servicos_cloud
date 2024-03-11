@@ -77,7 +77,7 @@ def callback(ch, method, properties, body):
         
         url = minio_client.get_presigned_url('GET', bucket_name, objeto_relatorio)
         # A substituicao é porue a URL vem com a conexão usada, que é o nome do container do MinIO
-        print('URL para o relatório: ' + url.split('?')[0].replace('minio', '127.0.0.1'))
+        print('URL para o relatório: ' + url.split('?')[0].replace('minio', '127.0.0.1'), end='\n\n')
         
         os.remove(f'{caminho}{objeto_relatorio}')
 
