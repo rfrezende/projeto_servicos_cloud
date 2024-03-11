@@ -1,5 +1,5 @@
 
-# Projeto do Módulo *Soluções Nuvem*
+# Projeto do Módulo *Serviços Cloud*
 
 ## Treinamento Jornada Digital ADA-Caixa
 
