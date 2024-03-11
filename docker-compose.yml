@@ -8,9 +8,7 @@ services:
       - '15672:15672'
       - '5672:5672'
     volumes:
-      - ./rabbitmq/config/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
-      #- ./rabbitmq/data:/var/lib/rabbitmq
-      #- ./rabbitmq/log:/var/log/rabbitmq
+      - ./conf_files/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
     restart: unless-stopped
     healthcheck:
       test: "rabbitmq-diagnostics check_port_connectivity --formatter json | tail -1 | grep -q '\"result\":\"ok\"'"
@@ -26,8 +24,6 @@ services:
     ports:
       - 6379:6379 
       - 8001:8001
-    # volumes:
-    #   - ./redis/data/:/data
     environment:
       REDIS_ARGS: --save 60 1000 --appendonly yes
       REDISTIMESERIES_ARGS: "RETENTION_POLICY=20"
@@ -52,6 +48,12 @@ services:
     secrets:
       - usuario
       - senha
+    healthcheck:
+      test: 'mc alias set myminio http://localhost:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"; mc ping --exit --quiet myminio > /dev/null'
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
 
   # Containers com os programas auxiliares
   base_scripts:
@@ -61,7 +63,6 @@ services:
       dockerfile_inline: |
         FROM python:3.12-bullseye
         RUN pip install minio pika redis
-        RUN apt-get update && apt-get install curl --quiet --yes
     container_name: base_scripts
     volumes:
       - ./scripts/rabbitmq_connection.py:/scripts/rabbitmq_connection.py
@@ -102,6 +103,15 @@ services:
     depends_on:
       - criar_ambiente_rabbitmq
 
+  criar_ambiente_minio:
+    extends: base_scripts
+    container_name: criar_ambiente_minio
+    volumes:
+      - ./scripts/criar_ambiente_minio.py:/scripts/app.py
+    depends_on:
+      minio:
+        condition: service_healthy
+
   consumer_transacoes:
     extends: base_scripts
     container_name: consumer_transacoes
@@ -109,36 +119,7 @@ services:
       - ./scripts/consumer-transacoes.py:/scripts/app.py
     depends_on:
       - criar_ambiente_rabbitmq
-
-  check_minio:
-    extends: base_scripts
-    container_name: check_minio
-    depends_on:
-      - minio
-    healthcheck:
-      test: curl --silent --head http://minio:9000/minio/health/live | grep -q 'HTTP/1.1 200 OK'
-      interval: 10s
-      timeout: 30s
-      retries: 5
-      start_period: 10s
-  
-  criar_ambiente_minio:
-    extends: base_scripts
-    container_name: criar_ambiente_minio
-    volumes:
-      - ./scripts/criar_ambiente_minio.py:/scripts/app.py
-    depends_on:
-      - check_minio
-
-  gera_relatorio:
-    extends: base_scripts
-    container_name: gera_relatorio
-    volumes:
-      - ./scripts/gera_relatorio.py:/scripts/app.py
-    depends_on:
-      - check_minio
-      - rabbitmq
-      - redis
+      - criar_ambiente_minio
 
 secrets:
   usuario:
