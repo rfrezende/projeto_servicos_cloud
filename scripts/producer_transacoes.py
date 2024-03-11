@@ -8,6 +8,7 @@
 #
 # Autor: Roberto Flavio Rezende
 #
+import json
 import redis
 import random
 from rabbitmq_connection import new_connection
@@ -29,8 +30,8 @@ while True:
     # Sem o sleep o script iria gerar milhares de transações por segundo e moer a CPU.
     sleep(random.randint(1, 10))
     
-    # Coloca todas as transacoes no Rio de Janeiro e 5% para Sao Paulo com o intuito de gerar "fraude"
-    cidade = 'Rio de Janeiro' if random.Random() < 0.05 else 'Sao Paulo'
+    # Coloca todas as transacoes no em Sao Paulo e 10% para Rio de Janeiro com o intuito de gerar "fraude"
+    cidade = 'Rio de Janeiro' if random.random() < 0.1 else 'Sao Paulo'
     
     # Escolhe uma conta aleatoriamente para enviar a transação
     conta = contas[random.randint(0, len(contas) - 1)]
@@ -40,6 +41,5 @@ while True:
     valor = random.randrange(100, 5000)
     
     timestamp = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
-    
     transacao = {'conta': conta, 'transacao': {'valor': valor, 'cidade': cidade, 'timestamp': timestamp}}
-    channel.basic_publish(exchange='transacoes', routing_key='solicitar', body=str(transacao))
+    channel.basic_publish(exchange='transacoes', routing_key='solicitar', body=json.dumps(transacao))
