@@ -23,10 +23,6 @@ channel.exchange_declare(exchange='transacoes', exchange_type='direct')
 channel.queue_declare(queue='transacoes_solicitadas', durable=True)
 channel.queue_bind(queue='transacoes_solicitadas', exchange='transacoes', routing_key='solicitar')
 
-# Fila para as notificações de movimentações em conta
-channel.queue_declare(queue='transacoes_notificacao', durable=True)
-channel.queue_bind(queue='transacoes_notificacao', exchange='transacoes', routing_key='notificar')
-
 con.close()
 
 timestamp = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
