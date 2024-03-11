@@ -39,51 +39,34 @@ services:
       start_period: 10s
 
   minio:
-    image: quay.io/minio/minio
+    image: minio/minio
     container_name: minio
     hostname: minio
     ports:
       - 9000:9000
       - 9001:9001
-    # volumes:
-    #   - ./minio/data:/data
-    environment:
-      MINIO_ROOT_USER: /run/secrets/usuario
-      MINIO_ROOT_PASSWORD: /run/secrets/senha
+    # MinIO é chato e precisa das senhas definidas em variavel de ambiente.
+    env_file:
+      - ./env_files/minio.env
     command: server /data --console-address ":9001"
     secrets:
       - usuario
       - senha
 
   # Containers com os programas auxiliares
-  base_redis:
-    image: projeto_redis:projetoAda
-    build:
-      context: .
-      dockerfile_inline: |
-        FROM python:3.12-bullseye
-        RUN pip install redis
-    entrypoint: python /scripts/app.py
-
-  criar_contas:
-    extends: base_redis
-    container_name: criar_contas
-    volumes:
-      - ./scripts/criar_contas.py:/scripts/app.py
-    depends_on:
-      redis:
-        condition: service_healthy
-
-  base_rabbitmq:
+  base_scripts:
     image: projeto_rabbitmq:projetoAda
     build:
       context: .
       dockerfile_inline: |
         FROM python:3.12-bullseye
-        RUN pip install pika redis
-    container_name: base_rabbitmq
+        RUN pip install minio pika redis
+        RUN apt-get update && apt-get install curl --quiet --yes
+    container_name: base_scripts
     volumes:
       - ./scripts/rabbitmq_connection.py:/scripts/rabbitmq_connection.py
+      - ./scripts/minio_connection.py:/scripts/minio_connection.py
+      - ./scripts/vazio.py:/scripts/app.py
     environment:
       PYTHONUNBUFFERED: 1
     entrypoint: python /scripts/app.py
@@ -91,32 +74,71 @@ services:
       - usuario
       - senha
 
-  inicio_rabbitmq:
-    extends: base_rabbitmq
-    container_name: inicio_rabbitmq
+  criar_contas_redis:
+    extends: base_scripts
+    container_name: criar_contas_redis
+    volumes:
+      - ./scripts/criar_contas_redis.py:/scripts/app.py
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  criar_ambiente_rabbitmq:
+    extends: base_scripts
+    container_name: criar_ambiente_rabbitmq
     volumes:
       - ./scripts/criar_ambiente_rabbitmq.py:/scripts/app.py
     depends_on:
       rabbitmq:
         condition: service_healthy
-      criar_contas:
+      criar_contas_redis:
         condition: service_completed_successfully
 
-  producer-transacoes:
-    extends: base_rabbitmq
-    container_name: producer-transacoes
+  producer_transacoes:
+    extends: base_scripts
+    container_name: producer_transacoes
     volumes:
       - ./scripts/producer_transacoes.py:/scripts/app.py
     depends_on:
-      - inicio_rabbitmq
+      - criar_ambiente_rabbitmq
 
-  consumer-transacoes:
-    extends: base_rabbitmq
-    container_name: consumer-transacoes
+  consumer_transacoes:
+    extends: base_scripts
+    container_name: consumer_transacoes
     volumes:
       - ./scripts/consumer-transacoes.py:/scripts/app.py
     depends_on:
-      - inicio_rabbitmq
+      - criar_ambiente_rabbitmq
+
+  check_minio:
+    extends: base_scripts
+    container_name: check_minio
+    depends_on:
+      - minio
+    healthcheck:
+      test: curl --silent --head http://minio:9000/minio/health/live | grep -q 'HTTP/1.1 200 OK'
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 10s
+  
+  criar_ambiente_minio:
+    extends: base_scripts
+    container_name: criar_ambiente_minio
+    volumes:
+      - ./scripts/criar_ambiente_minio.py:/scripts/app.py
+    depends_on:
+      - check_minio
+
+  gera_relatorio:
+    extends: base_scripts
+    container_name: gera_relatorio
+    volumes:
+      - ./scripts/gera_relatorio.py:/scripts/app.py
+    depends_on:
+      - check_minio
+      - rabbitmq
+      - redis
 
 secrets:
   usuario:
