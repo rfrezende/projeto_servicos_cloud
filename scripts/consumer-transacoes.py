@@ -11,27 +11,72 @@
 # Autor: Roberto Flavio Rezende
 #
 import json
+import os
 import redis
-from rabbitmq_connection import new_connection
-from datetime import datetime
+from rabbitmq_connection import new_connection as new_rabbit
+from minio_connection import new_connection as new_minio
+from datetime import datetime, timedelta
 
 
 timestamp = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
 print(f'{timestamp} Iniciando o consumo das filas...')
 
-connection = new_connection()
-channel = connection.channel()
+connection = new_rabbit()
+rabbitmq_client = connection.channel()
+minio_client = new_minio()
+redis_client = redis.Redis(host='redis', decode_responses=True)
 
-r = redis.Redis(host='redis', port=6379, decode_responses=True)
+bucket_name = 'relatorios-fraudes'
+formato_timestamp = '%Y-%m-%d %H:%M:%S'
+duas_horas = timedelta(hours=2)
+caminho = os.getcwd()
 
 def callback(ch, method, properties, body):
-        # Grava a transação no Redis
-        transacao = json.loads(body.decode('utf-8'))
-        r.json().arrappend(transacao['conta'], '$.transacoes', transacao['transacao'])
-        print(transacao)
-        
-        # Coloca uma mensagem para avisar que a conta teve uma nova transação
-        channel.basic_publish(exchange='transacoes', routing_key='notificar', body=transacao['conta'])
+    dado = json.loads(body.decode('utf-8'))
+    nu_conta = dado['conta']
+    transacao_atual = dado['transacao']
 
-channel.basic_consume(queue='transacoes_solicitadas', on_message_callback=callback, auto_ack=True)
-channel.start_consuming()
+    # Pega a transação anterior
+    transacao_anterior = redis_client.json().get(nu_conta, '$.transacoes[-1]')[0]
+    print(transacao_anterior)
+    
+    # Grava a transação atual no Redis
+    redis_client.json().arrappend(nu_conta, '$.transacoes', transacao_atual)
+
+    # Verifica os parametros para gerar o relatorio
+    timestamp_anterior = datetime.strptime(transacao_atual['timestamp'], formato_timestamp)
+    timestamp_atual = datetime.strptime(transacao_atual['timestamp'], formato_timestamp)
+    diferenca_de_horario = timestamp_atual - timestamp_anterior
+    
+    if transacao_anterior['cidade'] != transacao_atual['cidade'] and diferenca_de_horario < duas_horas:
+        # Caso seja considerado fraude, monta e grava o relatório.        
+        print('----> evidencia de fraude: ', nu_conta, transacao_atual, diferenca_de_horario)
+        
+        timestamp_relatorio = datetime.strftime(datetime.now(), '%Y%m%d%H%M%S')
+        objeto_relatorio = f'relatorio_{nu_conta}_{timestamp_relatorio}.txt'
+        
+        with open(f'{caminho}{objeto_relatorio}', 'w') as f:
+            f.write(f'# Relatório de suspeita de fraude\n\n'
+                    f'- Conta: {nu_conta}\n\n- Transação suspeita: \n'
+                    f'  - Conta destino: {transacao_atual['conta_destino']}\n'
+                    f'  - Cidade:\t{transacao_atual['cidade']}\n'
+                    f'  - Valor:\tR$ {transacao_atual['valor']}\n'
+                    f'  - Timestamp:\t{transacao_atual['timestamp']}\n\n'
+                    f'- Transação anterior\n'
+                    f'  - Conta destino: {transacao_anterior['conta_destino']}\n'
+                    f'  - Cidade:\t{transacao_anterior['cidade']}\n'
+                    f'  - Valor:\tR$ {transacao_anterior['valor']}\n'
+                    f'  - Timestamp:\t{transacao_anterior['timestamp']}\n\n'
+                    f'- Intervalo entre as transações: {diferenca_de_horario}')
+        
+        minio_client.fput_object(bucket_name, objeto_relatorio, f'{caminho}{objeto_relatorio}')
+        
+        url = minio_client.get_presigned_url('GET', bucket_name, objeto_relatorio)
+        # A substituicao é porue a URL vem com a conexão usada, que é o nome do container do MinIO
+        print('URL para o relatório: ' + url.split('?')[0].replace('minio', '127.0.0.1'))
+        
+        os.remove(f'{caminho}{objeto_relatorio}')
+
+
+rabbitmq_client.basic_consume(queue='transacoes_solicitadas', on_message_callback=callback, auto_ack=True)
+rabbitmq_client.start_consuming()
