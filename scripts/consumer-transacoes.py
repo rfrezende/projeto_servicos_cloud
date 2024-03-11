@@ -37,7 +37,8 @@ def callback(ch, method, properties, body):
     transacao_atual = dado['transacao']
 
     # Pega a transação anterior
-    transacao_anterior = redis_client.json().get(nu_conta, '$.transacoes[-1]')[0]
+    get_transacao_anterior = redis_client.json().get(nu_conta, '$.transacoes[-1]')
+    transacao_anterior = get_transacao_anterior[0]
     print(transacao_anterior)
     
     # Grava a transação atual no Redis
