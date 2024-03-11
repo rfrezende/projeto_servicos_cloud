@@ -26,7 +26,7 @@ Os demais containers são os serviços do Minio, RabbitMQ, Redis e funções aux
 - https://docs.docker.com/engine/install/  
 - https://docs.docker.com/compose/install/  
 
-2. Instalar o git.
+2. Instalar o git (a partir daqui deverá ser realizado apenas em ambiente Linux ou WSL).
     - https://git-scm.com/book/en/v2/Getting-Started-Installing-Git  
 
 3. Clonar o repositório para seu laboratório  
@@ -41,3 +41,9 @@ Os demais containers são os serviços do Minio, RabbitMQ, Redis e funções aux
 5. Verificar os logs do container que gera o relatório.  
 
 > docker logs --follow consumer_transacoes
+
+6. Remover o laboratório.
+> docker-compose down
+> cd ..
+> sudo rm -r projeto_servicos_cloud
+> docker rmi projeto_ada minio/minio redis/redis-stack rabbitmq:3-management $(docker images | grep 'none' | awk '{print $3}')
