@@ -48,7 +48,7 @@ def callback(ch, method, properties, body):
     redis_client.json().arrappend(nu_conta, '$.transacoes', transacao_atual)
 
     # Verifica os parametros para gerar o relatorio
-    timestamp_anterior = datetime.strptime(transacao_atual['timestamp'], formato_timestamp)
+    timestamp_anterior = datetime.strptime(transacao_anterior['timestamp'], formato_timestamp)
     timestamp_atual = datetime.strptime(transacao_atual['timestamp'], formato_timestamp)
     diferenca_de_horario = timestamp_atual - timestamp_anterior
     
