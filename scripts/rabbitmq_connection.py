@@ -15,6 +15,7 @@ def new_connection(host='rabbitmq', vhost='projeto'):
     """ Função para estabelecer a conexão com o RabbitMQ
 
     Args:
+        host (str): Endereço do RabbitMQ
         vhost (str): RabbitMQ virtual host a ser utilizado.
 
     Returns:
