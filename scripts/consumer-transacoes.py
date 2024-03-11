@@ -54,7 +54,7 @@ def callback(ch, method, properties, body):
     
     if transacao_anterior['cidade'] != transacao_atual['cidade'] and diferenca_de_horario < duas_horas:
         # Caso seja considerado fraude, monta e grava o relatório.        
-        print(f'----> evidencia de fraude:\nConta: nu_conta\n Transação anterior: {transacao_anterior}\n Transação atual: {transacao_atual}')
+        print(f'----> evidencia de fraude:\n Conta: {nu_conta}\n Transação anterior:\t{transacao_anterior}\n Transação atual:\t{transacao_atual}')
         
         timestamp_relatorio = datetime.strftime(datetime.now(), '%Y%m%d%H%M%S')
         objeto_relatorio = f'relatorio_{nu_conta}_{timestamp_relatorio}.txt'
