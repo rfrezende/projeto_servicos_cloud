@@ -57,7 +57,7 @@ services:
 
   # Containers com os programas auxiliares
   base_scripts:
-    image: projetoAda:latest
+    image: projeto_ada:latest
     build:
       context: .
       dockerfile_inline: |
