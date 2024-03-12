@@ -32,21 +32,43 @@ Os demais containers são os serviços do Minio, RabbitMQ, Redis e funções aux
 
 4. Clonar o repositório para seu laboratório  
 
-> git clone https://github.com/rfrezende/projeto_servicos_cloud.git  
+```
+git clone https://github.com/rfrezende/projeto_servicos_cloud.git  
+```
 
-4. Executar o ambiente.  
+5. Executar o ambiente [^bignote].  
 
-> cd projeto_servicos_cloud
-> (apenas no fedora) sudo setenforce 0
-> sudo docker-compose up -d  
+```
+cd projeto_servicos_cloud
+```   
+```
+sudo docker-compose up -d
+```  
 
-5. Verificar os logs do container que gera o relatório. Pode demorar alguns minutos para aparecer uma "fraude".  
+6. Verificar os logs do container que gera o relatório. Pode demorar alguns minutos para aparecer uma "fraude".  
 
-> sudo docker logs --follow consumer_transacoes  
+```
+sudo docker logs --follow consumer_transacoes  
+```
 
-6. Remover o laboratório.  
+7. Remover o laboratório.  
 
-> sudo docker-compose down  
-> cd ..  
-> sudo rm -r projeto_servicos_cloud  
-> sudo docker rmi projeto_ada minio/minio redis/redis-stack rabbitmq:3-management $(sudo docker images | grep 'none' | awk '{print $3}')  
+```
+sudo docker-compose down  
+```
+```
+cd ..  
+```
+```
+sudo rm -r projeto_servicos_cloud  
+```
+```
+sudo docker rmi projeto_ada minio/minio redis/redis-stack rabbitmq:3-management $(sudo docker images | grep 'none' | awk '{print $3}')
+```  
+  
+  
+  
+[^bignote]: Se tiver problemas com o Fedora ou outra distribuição baseada em Red Hat, execute o comando abaixo antes do docker-compose  
+    ```
+    sudo setenforce 0
+    ```
