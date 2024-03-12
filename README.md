@@ -40,7 +40,10 @@ git clone https://github.com/rfrezende/projeto_servicos_cloud.git
 
 ```
 cd projeto_servicos_cloud
-```   
+```
+```
+sudo docker image build --tag projeto_ada:latest --file ./base_scripts.Dockerfile .
+```
 ```
 sudo docker-compose up -d
 ```  
