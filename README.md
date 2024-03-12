@@ -5,9 +5,9 @@
 
 ### Descrição
 
-Projeto proposto para o módulo *Serviços Cloud* do treinamento Jornada Digital ADA-Caixa.  
+Solução proposta para o projeto do módulo *Serviços Cloud* do treinamento Jornada Digital Devops ADA-Caixa.  
 
-A solução foi encapsulaad totalmente em containers e executa tudo na ordem correta.
+A solução foi encapsulada totalmente em containers e executa tudo na ordem correta.
 
 Os scripts executam em containers próprios como a seguir:
 
@@ -15,7 +15,7 @@ Os scripts executam em containers próprios como a seguir:
 - `criar_ambiente_rabbitmq.py`: Cria a exchange, a fila e o biding no RabbitMQ. Ele executa e para o container.
 - `criar_ambiente_minio.py`: Cria o bucket no MinIO. Ele executa e para o container.
 - `producer_transacoes.py`: Gera transaçoes aleatórias e envia para o RabbitMQ.
-- `consumer_transacoes.py`: Consome a fila no RabbitMQ e gera o relatório de fraude, caso seja identificado.
+- `consumer_transacoes.py`: Consome a fila no RabbitMQ, grava o cache e gera o relatório de fraude, caso seja identificado.
 
 Os demais containers são os serviços do Minio, RabbitMQ, Redis e funções auxiliares.
 
@@ -23,13 +23,14 @@ Os demais containers são os serviços do Minio, RabbitMQ, Redis e funções aux
 
 1. Instalar o Docker e o Docker Compose.  
 
-- https://docs.docker.com/engine/install/  
-- https://docs.docker.com/compose/install/  
+    - https://docs.docker.com/engine/install/  
+    - https://docs.docker.com/compose/install/  
 
-2. Instalar o git (a partir daqui deverá ser realizado apenas em ambiente Linux ou WSL).  
+2. Instalar o git (a partir daqui deverá ser realizado apenas em ambiente Linux ou WSL).
+
     - https://git-scm.com/book/en/v2/Getting-Started-Installing-Git  
 
-3. Clonar o repositório para seu laboratório  
+4. Clonar o repositório para seu laboratório  
 
 > git clone https://github.com/rfrezende/projeto_servicos_cloud.git  
 
@@ -42,7 +43,8 @@ Os demais containers são os serviços do Minio, RabbitMQ, Redis e funções aux
 
 > docker logs --follow consumer_transacoes  
 
-6. Remover o laboratório.
+6. Remover o laboratório.  
+
 > docker-compose down  
 > cd ..  
 > sudo rm -r projeto_servicos_cloud  
