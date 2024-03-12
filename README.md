@@ -7,7 +7,7 @@
 
 Solução proposta para o projeto do módulo *Serviços Cloud* do treinamento Jornada Digital Devops ADA-Caixa.  
 
-A solução foi encapsulada totalmente em containers e executa tudo na ordem correta.
+A solução foi encapsulada totalmente em containers e executa tudo na ordem correta. Foi testada em ambiente Debian, WSL com Ubuntu, Amazon Linux e Fedora Server.
 
 Os scripts executam em containers próprios como a seguir:
 
@@ -26,7 +26,7 @@ Os demais containers são os serviços do Minio, RabbitMQ, Redis e funções aux
     - https://docs.docker.com/engine/install/  
     - https://docs.docker.com/compose/install/  
 
-2. Instalar o git (a partir daqui deverá ser realizado apenas em ambiente Linux ou WSL).
+2. Instalar o git (a partir daqui os passos deverão ser realizados apenas em ambiente Linux ou WSL).
 
     - https://git-scm.com/book/en/v2/Getting-Started-Installing-Git  
 
@@ -36,16 +36,17 @@ Os demais containers são os serviços do Minio, RabbitMQ, Redis e funções aux
 
 4. Executar o ambiente.  
 
-> cd projeto_servicos_cloud  
-> docker-compose up -d  
+> cd projeto_servicos_cloud
+> (apenas no fedora) sudo setenforce 0
+> sudo docker-compose up -d  
 
-5. Verificar os logs do container que gera o relatório.  
+5. Verificar os logs do container que gera o relatório. Pode demorar alguns minutos para aparecer uma "fraude".  
 
-> docker logs --follow consumer_transacoes  
+> sudo docker logs --follow consumer_transacoes  
 
 6. Remover o laboratório.  
 
-> docker-compose down  
+> sudo docker-compose down  
 > cd ..  
 > sudo rm -r projeto_servicos_cloud  
-> docker rmi projeto_ada minio/minio redis/redis-stack rabbitmq:3-management $(docker images | grep 'none' | awk '{print $3}')  
+> sudo docker rmi projeto_ada minio/minio redis/redis-stack rabbitmq:3-management $(sudo docker images | grep 'none' | awk '{print $3}')  
