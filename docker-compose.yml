@@ -58,11 +58,6 @@ services:
   # Containers com os programas auxiliares
   base_scripts:
     image: projeto_ada:latest
-    build:
-      context: .
-      dockerfile_inline: |
-        FROM python:3.12-bullseye
-        RUN pip install minio pika redis
     container_name: base_scripts
     volumes:
       - ./scripts/rabbitmq_connection.py:/scripts/rabbitmq_connection.py
@@ -79,7 +74,7 @@ services:
     extends: base_scripts
     container_name: criar_contas_redis
     volumes:
-      - ./scripts/criar_contas_redis.py:/scripts/app.py
+      - ./scripts/criar_contas_redis.py:/scripts/app.py 
     depends_on:
       redis:
         condition: service_healthy
