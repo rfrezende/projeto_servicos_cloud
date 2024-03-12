@@ -69,6 +69,4 @@ sudo docker rmi projeto_ada minio/minio redis/redis-stack rabbitmq:3-management 
   
   
 [^bignote]: Se tiver problemas com o Fedora ou outra distribuição baseada em Red Hat, execute o comando abaixo antes do docker-compose  
-    ```
-    sudo setenforce 0
-    ```
+    `sudo setenforce 0`
