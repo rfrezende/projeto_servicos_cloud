@@ -17,8 +17,11 @@ Os scripts executam em containers próprios como a seguir:
 - `producer_transacoes.py`: Gera transaçoes aleatórias e envia para o RabbitMQ.
 - `consumer_transacoes.py`: Consome a fila no RabbitMQ, grava o cache e gera o relatório de fraude, caso seja identificado.
 
-Os demais containers são os serviços do Minio, RabbitMQ, Redis e funções auxiliares.
+Os demais containers são os serviços do Minio, RabbitMQ, Redis e funções auxiliares.  
 
+O critério para fraude foi a mudança de cidades em um intervalo menor do que duas horas.  
+  
+  
 ### Instruções
 
 1. Instalar o Docker e o Docker Compose.  
