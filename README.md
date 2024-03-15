@@ -26,8 +26,8 @@ O critério para fraude foi a mudança de cidades em um intervalo menor do que d
 
 1. Instalar o Docker e o Docker Compose.  
 
-    - https://docs.docker.com/engine/install/  
-    - https://docs.docker.com/compose/install/  
+    - [https://docs.docker.com/engine/install/ ](https://docs.docker.com/engine/install/ ) 
+    - [https://docs.docker.com/compose/install/standalone/](https://docs.docker.com/compose/install/standalone/)  
 
 2. Instalar o git (a partir daqui os passos deverão ser realizados apenas em ambiente Linux ou WSL).
 
